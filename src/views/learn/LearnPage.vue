@@ -1,28 +1,37 @@
 <script setup lang="ts">
 import { computed, ref, watchEffect } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import { Search } from '@element-plus/icons-vue'
 import { useResourcesStore, type ResourceCategory, type ResourceItem } from '../../stores/resources'
 
+const { t } = useI18n()
 const store = useResourcesStore()
 watchEffect(() => {
   store.seedIfEmpty()
 })
 
 const categories: ResourceCategory[] = ['推荐', '语文', '数学', '英语', '物理', '化学', '历史', '地理', '生物', '编程']
+
+const categorySegmentOptions = computed(() =>
+  categories.map((c) => ({
+    label: t(`learn.category.${c}`),
+    value: c,
+  })),
+)
+
 const category = ref<ResourceCategory>('推荐')
 const keyword = ref('')
 
 const filtered = computed(() => {
   const q = keyword.value.trim().toLowerCase()
-  const list = store.items
+  return store.items
     .filter((x) => (category.value === '推荐' ? true : x.category === category.value))
     .filter((x) => {
       if (!q) return true
       const hay = `${x.title} ${x.tags.join(' ')} ${x.category}`.toLowerCase()
       return hay.includes(q)
     })
-  return list
 })
 
 function open(item: ResourceItem) {
@@ -32,8 +41,8 @@ function open(item: ResourceItem) {
 function copyLink(item: ResourceItem) {
   void navigator.clipboard
     .writeText(item.url)
-    .then(() => ElMessage.success('链接已复制'))
-    .catch(() => ElMessage.error('复制失败，请手动复制'))
+    .then(() => ElMessage.success(t('common.linkCopied')))
+    .catch(() => ElMessage.error(t('common.copyFail')))
 }
 </script>
 
@@ -41,9 +50,9 @@ function copyLink(item: ResourceItem) {
   <div class="learn">
     <div class="hero">
       <div class="hero__content">
-        <div class="hero__title">学习资源</div>
-        <div class="hero__sub">按学科分类、搜索、点击即可跳转学习</div>
-        <el-input v-model="keyword" class="hero__search" placeholder="搜索：函数 / 阅读 / 语法 / 试卷…" clearable>
+        <div class="hero__title">{{ t('learn.heroTitle') }}</div>
+        <div class="hero__sub">{{ t('learn.heroSub') }}</div>
+        <el-input v-model="keyword" class="hero__search" :placeholder="t('learn.searchPlaceholder')" clearable>
           <template #prefix><el-icon><Search /></el-icon></template>
         </el-input>
       </div>
@@ -51,24 +60,24 @@ function copyLink(item: ResourceItem) {
 
     <el-card shadow="never" class="panel">
       <div class="cats">
-        <el-segmented v-model="category" :options="categories" />
+        <el-segmented v-model="category" :options="categorySegmentOptions" />
       </div>
 
-      <el-empty v-if="filtered.length === 0" description="没有匹配的资源" />
+      <el-empty v-if="filtered.length === 0" :description="t('learn.empty')" />
 
       <div v-else class="grid">
         <el-card v-for="item in filtered" :key="item.id" shadow="hover" class="card" @click="open(item)">
           <div class="cover">
-            <div class="cover__badge">{{ item.category }}</div>
+            <div class="cover__badge">{{ t(`learn.category.${item.category}`) }}</div>
             <div class="cover__title">{{ item.title }}</div>
           </div>
           <div class="meta">
             <div class="tags">
-              <el-tag v-for="t in item.tags.slice(0, 3)" :key="t" size="small" effect="plain">{{ t }}</el-tag>
+              <el-tag v-for="tag in item.tags.slice(0, 3)" :key="tag" size="small" effect="plain">{{ tag }}</el-tag>
             </div>
             <div class="actions" @click.stop>
-              <el-button size="small" @click="open(item)">打开</el-button>
-              <el-button size="small" type="primary" plain @click="copyLink(item)">复制链接</el-button>
+              <el-button size="small" @click="open(item)">{{ t('common.open') }}</el-button>
+              <el-button size="small" type="primary" plain @click="copyLink(item)">{{ t('common.copyLink') }}</el-button>
             </div>
           </div>
         </el-card>
@@ -176,4 +185,3 @@ function copyLink(item: ResourceItem) {
   gap: 6px;
 }
 </style>
-

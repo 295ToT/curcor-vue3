@@ -1,12 +1,13 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { i18n } from '../i18n'
 
 const routes: RouteRecordRaw[] = [
   {
     path: '/login',
     name: 'login',
     component: () => import('../views/auth/LoginPage.vue'),
-    meta: { title: '登录' },
+    meta: { titleKey: 'route.login' },
   },
   {
     path: '/',
@@ -18,19 +19,25 @@ const routes: RouteRecordRaw[] = [
         path: 'students',
         name: 'students',
         component: () => import('../views/students/StudentsPage.vue'),
-        meta: { title: '学生管理' },
+        meta: { titleKey: 'route.students' },
+      },
+      {
+        path: 'teachers',
+        name: 'teachers',
+        component: () => import('../views/teachers/TeachersPage.vue'),
+        meta: { titleKey: 'route.teachers' },
       },
       {
         path: 'reports',
         name: 'reports',
         component: () => import('../views/reports/ReportsPage.vue'),
-        meta: { title: '统计报表' },
+        meta: { titleKey: 'route.reports' },
       },
       {
         path: 'learn',
         name: 'learn',
         component: () => import('../views/learn/LearnPage.vue'),
-        meta: { title: '学习资源' },
+        meta: { titleKey: 'route.learn' },
       },
     ],
   },
@@ -49,8 +56,10 @@ router.beforeEach((to) => {
 })
 
 router.afterEach((to) => {
-  const title = (to.meta?.title as string | undefined) ?? '学生管理系统'
-  document.title = title
+  const key = to.meta?.titleKey as string | undefined
+  const { t } = i18n.global
+  const page = key ? String(t(key)) : String(t('app.title'))
+  document.title = `${page} · ${String(t('app.title'))}`
 })
 
 export default router

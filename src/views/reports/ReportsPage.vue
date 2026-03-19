@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import * as echarts from 'echarts'
 import { useStudentsStore } from '../../stores/students'
 import { extractGrade } from '../../utils/student'
 
+const { t, locale } = useI18n()
 const store = useStudentsStore()
 
 const total = computed(() => store.students.length)
@@ -26,17 +28,21 @@ function buildCounts(keyFn: (s: (typeof store.students)[number]) => string) {
     .sort((a, b) => b.value - a.value)
 }
 
+function translateGradeLabel(name: string) {
+  return name === '未分类' ? t('common.uncategorized') : name
+}
+
 function render() {
   if (genderEl.value && !genderChart) genderChart = echarts.init(genderEl.value)
   if (gradeEl.value && !gradeChart) gradeChart = echarts.init(gradeEl.value)
   if (classEl.value && !classChart) classChart = echarts.init(classEl.value)
 
   const genderData = [
-    { name: '男', value: male.value },
-    { name: '女', value: female.value },
+    { name: t('common.male'), value: male.value },
+    { name: t('common.female'), value: female.value },
   ]
   genderChart?.setOption({
-    title: { text: '性别分布', left: 'center', top: 10 },
+    title: { text: t('reports.chartGender'), left: 'center', top: 10 },
     tooltip: { trigger: 'item' },
     legend: { bottom: 10, left: 'center' },
     series: [{ type: 'pie', radius: ['35%', '65%'], data: genderData }],
@@ -44,17 +50,21 @@ function render() {
 
   const gradeData = buildCounts((s) => extractGrade(s.className))
   gradeChart?.setOption({
-    title: { text: '年级人数', left: 'center', top: 10 },
+    title: { text: t('reports.chartGrade'), left: 'center', top: 10 },
     tooltip: { trigger: 'axis' },
     grid: { left: 40, right: 20, bottom: 30, top: 60 },
-    xAxis: { type: 'category', data: gradeData.map((x) => x.name), axisLabel: { interval: 0 } },
+    xAxis: {
+      type: 'category',
+      data: gradeData.map((x) => translateGradeLabel(x.name)),
+      axisLabel: { interval: 0 },
+    },
     yAxis: { type: 'value' },
     series: [{ type: 'bar', data: gradeData.map((x) => x.value) }],
   })
 
   const classData = buildCounts((s) => s.className).slice(0, 12)
   classChart?.setOption({
-    title: { text: '班级人数（Top 12）', left: 'center', top: 10 },
+    title: { text: t('reports.chartClass'), left: 'center', top: 10 },
     tooltip: { trigger: 'axis' },
     grid: { left: 120, right: 20, bottom: 30, top: 60 },
     xAxis: { type: 'value' },
@@ -80,6 +90,8 @@ watch(
   { deep: true },
 )
 
+watch(locale, () => render())
+
 onBeforeUnmount(() => {
   window.removeEventListener('resize', resize)
   genderChart?.dispose()
@@ -95,19 +107,19 @@ onBeforeUnmount(() => {
   <el-row :gutter="12">
     <el-col :span="8">
       <el-card shadow="never">
-        <div class="stat__label">学生总数</div>
+        <div class="stat__label">{{ t('common.totalStudents') }}</div>
         <div class="stat__value">{{ total }}</div>
       </el-card>
     </el-col>
     <el-col :span="8">
       <el-card shadow="never">
-        <div class="stat__label">男生</div>
+        <div class="stat__label">{{ t('common.maleStudents') }}</div>
         <div class="stat__value">{{ male }}</div>
       </el-card>
     </el-col>
     <el-col :span="8">
       <el-card shadow="never">
-        <div class="stat__label">女生</div>
+        <div class="stat__label">{{ t('common.femaleStudents') }}</div>
         <div class="stat__value">{{ female }}</div>
       </el-card>
     </el-col>
@@ -146,4 +158,3 @@ onBeforeUnmount(() => {
   height: 340px;
 }
 </style>
-

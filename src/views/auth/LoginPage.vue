@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { useAuthStore } from '../../stores/auth'
+import type { AppLocale } from '../../i18n'
 
 const router = useRouter()
 const auth = useAuthStore()
+const { t, locale } = useI18n()
 
 const formRef = ref<FormInstance>()
 const loading = ref(false)
@@ -20,9 +23,13 @@ const form = reactive<LoginForm>({
   password: '',
 })
 
-const rules: FormRules<LoginForm> = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+const rules = computed<FormRules<LoginForm>>(() => ({
+  username: [{ required: true, message: t('login.usernameRequired'), trigger: 'blur' }],
+  password: [{ required: true, message: t('login.passwordRequired'), trigger: 'blur' }],
+}))
+
+function onLocaleCommand(cmd: string) {
+  if (cmd === 'zh-CN' || cmd === 'en-US') locale.value = cmd as AppLocale
 }
 
 async function submit() {
@@ -32,10 +39,10 @@ async function submit() {
   try {
     const authed = auth.login(form.username, form.password)
     if (!authed) {
-      ElMessage.error('账号或密码错误（demo: admin / 123456）')
+      ElMessage.error(t('login.fail'))
       return
     }
-    ElMessage.success('登录成功')
+    ElMessage.success(t('login.success'))
     await router.replace('/students')
   } finally {
     loading.value = false
@@ -45,21 +52,32 @@ async function submit() {
 
 <template>
   <div class="wrap">
+    <div class="toolbar">
+      <el-dropdown trigger="click" @command="onLocaleCommand">
+        <el-button size="small">{{ locale === 'zh-CN' ? t('layout.langZh') : t('layout.langEn') }}</el-button>
+        <template #dropdown>
+          <el-dropdown-menu>
+            <el-dropdown-item command="zh-CN">{{ t('layout.langZh') }}</el-dropdown-item>
+            <el-dropdown-item command="en-US">{{ t('layout.langEn') }}</el-dropdown-item>
+          </el-dropdown-menu>
+        </template>
+      </el-dropdown>
+    </div>
     <el-card class="card" shadow="never">
-      <div class="title">学生管理系统</div>
-      <div class="sub">登录后进入管理后台</div>
+      <div class="title">{{ t('login.title') }}</div>
+      <div class="sub">{{ t('login.sub') }}</div>
 
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent>
-        <el-form-item label="用户名" prop="username">
+        <el-form-item :label="t('login.username')" prop="username">
           <el-input v-model="form.username" autocomplete="username" />
         </el-form-item>
-        <el-form-item label="密码" prop="password">
+        <el-form-item :label="t('login.password')" prop="password">
           <el-input v-model="form.password" type="password" show-password autocomplete="current-password" />
         </el-form-item>
-        <el-button type="primary" :loading="loading" style="width: 100%" @click="submit">登录</el-button>
+        <el-button type="primary" :loading="loading" style="width: 100%" @click="submit">{{ t('login.submit') }}</el-button>
       </el-form>
 
-      <div class="hint">Demo 账号：admin，密码：123456</div>
+      <div class="hint">{{ t('login.hint') }}</div>
     </el-card>
   </div>
 </template>
@@ -72,6 +90,12 @@ async function submit() {
   background: radial-gradient(1200px 600px at 20% 10%, #e6f0ff 0%, transparent 60%),
     radial-gradient(1200px 600px at 80% 20%, #e7fff6 0%, transparent 60%), #f5f7fa;
   padding: 20px;
+  position: relative;
+}
+.toolbar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 .card {
   width: 420px;
@@ -93,4 +117,3 @@ async function submit() {
   color: rgba(0, 0, 0, 0.45);
 }
 </style>
-

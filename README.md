@@ -11,6 +11,7 @@
 | 构建 | Vite 8 |
 | 路由 | Vue Router 5（路由懒加载） |
 | 状态 | Pinia 3 |
+| 国际化 | vue-i18n 9（中文 `zh-CN` / 英文 `en-US`） |
 | UI | Element Plus 2 + @element-plus/icons-vue |
 | 图表 | ECharts 6 |
 | 表格 | xlsx（Excel 导入/导出） |
@@ -19,10 +20,12 @@
 
 - **登录**：路由守卫，未登录跳转登录页；演示账号见下文。
 - **学生管理**：列表、新增/编辑/删除、按年级/班级筛选、关键词搜索、分页。
+- **教师管理**：列表、新增/编辑/删除、按科目筛选、关键词搜索、分页；Excel 导入/导出。
 - **Excel**：导入 `.xlsx/.xls`（表头支持「姓名、年龄、性别、班级」或英文列名）；导出当前筛选结果。
 - **统计报表**：人数汇总 + ECharts（性别、年级、班级 Top 等）。
 - **学习资源**：分类与搜索，卡片跳转外部链接；资源列表可持久化。
 - **主题**：右上角按钮切换 **亮色 / 暗色**（`data-theme` + `html.dark` + Element Plus 暗色变量）；侧栏、主内容区、表格等与主题联动。
+- **语言**：顶栏（及登录页右上角）切换 **中文 / English**，文案与 Element Plus 组件语言同步；偏好写入 `student-admin:locale:v1`。
 
 ## 快速开始
 
@@ -76,8 +79,10 @@ student-admin/
 ├── package.json
 ├── vite.config.ts
 ├── src/
-│   ├── main.ts              # 入口：Pinia、Router、Element Plus、暗色 CSS 变量
-│   ├── App.vue              # 全局主题同步（data-theme / html.dark）
+│   ├── main.ts              # 入口：Pinia、i18n、Router、Element Plus、暗色 CSS 变量
+│   ├── App.vue              # ElConfigProvider（Element 语言包）+ 全局主题同步
+│   ├── i18n/index.ts        # vue-i18n 实例与语言持久化
+│   ├── locales/             # zh-CN / en-US 文案
 │   ├── style.css            # 全局 CSS 变量（亮/暗、侧栏、卡片等）
 │   ├── router/index.ts      # 路由与懒加载、登录守卫
 │   ├── stores/              # Pinia：auth、students、resources、ui
@@ -86,6 +91,7 @@ student-admin/
 │       ├── layout/AppLayout.vue   # 侧栏 + 顶栏 + 主题按钮
 │       ├── auth/LoginPage.vue
 │       ├── students/StudentsPage.vue
+│       ├── teachers/TeachersPage.vue
 │       ├── reports/ReportsPage.vue
 │       └── learn/LearnPage.vue
 └── README.md
@@ -98,9 +104,11 @@ student-admin/
 | Key 前缀 / 说明 | 用途 |
 |-----------------|------|
 | `student-admin:students:v1` | 学生列表 |
+| `student-admin:teachers:v1` | 教师列表 |
 | `student-admin:auth:v1` | 登录状态 |
 | `student-admin:resources:v1` | 学习资源列表 |
 | `student-admin:ui:v2` | 亮/暗主题偏好 |
+| `student-admin:locale:v1` | 界面语言 `zh-CN` / `en-US` |
 
 清除站点数据可恢复为「空数据 + 默认主题」（学生页会在无数据时写入少量种子数据，便于体验）。
 
@@ -110,6 +118,7 @@ student-admin/
 |------|------|--------|
 | `/login` | 登录 | 否 |
 | `/students` | 学生管理 | 是 |
+| `/teachers` | 教师管理 | 是 |
 | `/learn` | 学习资源 | 是 |
 | `/reports` | 统计报表 | 是 |
 
